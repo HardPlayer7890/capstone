@@ -10,6 +10,11 @@
 
 #include "utils.h"
 
+#if defined(CAPSTONE_SECRETGRIND)
+#	include "VG_defines.h"
+#endif
+
+
 // create a cache for fast id lookup
 static unsigned short *make_id2insn(insn_map *insns, unsigned int size)
 {
@@ -43,7 +48,7 @@ int name2id(name_map* map, int max, const char *name)
 	int i;
 
 	for (i = 0; i < max; i++) {
-		if (!strcmp(map[i].name, name)) {
+		if (!cs_strcmp(map[i].name, name)) {
 			return map[i].id;
 		}
 	}
@@ -65,13 +70,13 @@ unsigned int count_positive(unsigned char *list)
 
 char *cs_strdup(const char *str)
 {
-	size_t len = strlen(str)+ 1;
+	size_t len = cs_strlen(str)+ 1;
 	void *new = cs_mem_malloc(len);
 
 	if (new == NULL)
 		return NULL;
 
-	return (char *)memmove(new, str, len);
+	return (char *)cs_memmove(new, str, len);
 }
 
 // we need this since Windows doesnt have snprintf()

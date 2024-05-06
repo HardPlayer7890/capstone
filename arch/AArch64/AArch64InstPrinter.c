@@ -31,12 +31,15 @@
 #include "AArch64Mapping.h"
 #include "AArch64AddressingModes.h"
 
+#if defined(CAPSTONE_SECRETGRIND)
+#	include "../../VG_defines.h"
+#endif
+
 #define GET_REGINFO_ENUM
 #include "AArch64GenRegisterInfo.inc"
 
 #define GET_INSTRINFO_ENUM
 #include "AArch64GenInstrInfo.inc"
-
 
 static char *getRegisterName(unsigned RegNo, int AltIdx);
 static void printOperand(MCInst *MI, unsigned OpNo, SStream *O);
@@ -570,7 +573,7 @@ static bool printSysAlias(MCInst *MI, SStream *O)
 			MI->flat_insn->detail->arm64.op_count++;
 		}
 
-		if (!strstr(Asm, "all")) {
+		if (!cs_strstr(Asm, "all")) {
 			unsigned Reg = MCOperand_getReg(MCInst_getOperand(MI, 4));
 			SStream_concat(O, ", %s", getRegisterName(Reg, AArch64_NoRegAltName));
 			if (MI->csh->detail) {
@@ -1385,7 +1388,7 @@ void AArch64_post_printer(csh handle, cs_insn *flat_insn, char *insn_asm, MCInst
 		return;
 
 	// check if this insn requests write-back
-	if (strrchr(insn_asm, '!') != NULL)
+	if (cs_strrchr(insn_asm, '!') != NULL)
 		flat_insn->detail->arm64.writeback = true;
 }
 

@@ -42,6 +42,11 @@
 #define GET_INSTRINFO_ENUM
 #include "ARMGenInstrInfo.inc"
 
+#if defined(CAPSTONE_SECRETGRIND)
+#	include "../../VG_defines.h"
+#endif
+
+
 static bool ITStatus_push_back(ARM_ITStatus *it, char v)
 {
 	if (it->size >= sizeof(it->ITStates)) {
@@ -455,12 +460,12 @@ static DecodeStatus _ARM_getInstruction(cs_struct *ud, MCInst *MI, const uint8_t
 		return MCDisassembler_Fail;
 
 	if (MI->flat_insn->detail) {
-		memset(&MI->flat_insn->detail->arm, 0, sizeof(cs_arm));
+		cs_memset(&MI->flat_insn->detail->arm, 0, sizeof(cs_arm));
 		for (i = 0; i < ARR_SIZE(MI->flat_insn->detail->arm.operands); i++)
 			MI->flat_insn->detail->arm.operands[i].vector_index = -1;
 	}
 
-	memcpy(bytes, code, 4);
+	cs_memcpy(bytes, code, 4);
 
 	if (ud->big_endian)
 		insn = (bytes[3] << 0) |
@@ -697,12 +702,12 @@ static DecodeStatus _Thumb_getInstruction(cs_struct *ud, MCInst *MI, const uint8
 		return MCDisassembler_Fail;
 
 	if (MI->flat_insn->detail) {
-		memset(&MI->flat_insn->detail->arm, 0, sizeof(cs_arm));
+		cs_memset(&MI->flat_insn->detail->arm, 0, sizeof(cs_arm));
 		for (i = 0; i < ARR_SIZE(MI->flat_insn->detail->arm.operands); i++)
 			MI->flat_insn->detail->arm.operands[i].vector_index = -1;
 	}
 
-	memcpy(bytes, code, 2);
+	cs_memcpy(bytes, code, 2);
 
 	if (ud->big_endian)
 		insn16 = (bytes[0] << 8) | bytes[1];
@@ -755,7 +760,7 @@ static DecodeStatus _Thumb_getInstruction(cs_struct *ud, MCInst *MI, const uint8
 		// not enough data
 		return MCDisassembler_Fail;
 
-	memcpy(bytes, code, 4);
+	cs_memcpy(bytes, code, 4);
 
 	if (ud->big_endian)
 		insn32 = (bytes[3] <<  24) |

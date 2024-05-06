@@ -26,6 +26,10 @@
 #include "../../MCDisassembler.h"
 #include "../../MathExtras.h"
 
+#if defined(CAPSTONE_SECRETGRIND)
+#	include "../../VG_defines.h"
+#endif
+
 #define GET_REGINFO_ENUM
 #include "PPCGenRegisterInfo.inc"
 
@@ -350,7 +354,7 @@ static DecodeStatus getInstruction(MCInst *MI,
 			(code[1] <<  8) | (code[0] <<  0);
 
 	if (MI->flat_insn->detail) {
-		memset(MI->flat_insn->detail, 0, sizeof(cs_detail));
+		cs_memset(MI->flat_insn->detail, 0, sizeof(cs_detail));
 	}
 
 	result = decodeInstruction_4(DecoderTable32, MI, insn, Address, 4);

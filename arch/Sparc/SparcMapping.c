@@ -10,6 +10,10 @@
 
 #include "SparcMapping.h"
 
+#if defined(CAPSTONE_SECRETGRIND)
+#	include "../../VG_defines.h"
+#endif
+
 #define GET_INSTRINFO_ENUM
 #include "SparcGenInstrInfo.inc"
 
@@ -2807,13 +2811,13 @@ void Sparc_get_insn_id(cs_struct *h, cs_insn *insn, unsigned int id)
 
 		if (h->detail) {
 #ifndef CAPSTONE_DIET
-			memcpy(insn->detail->regs_read, insns[i].regs_use, sizeof(insns[i].regs_use));
+			cs_memcpy(insn->detail->regs_read, insns[i].regs_use, sizeof(insns[i].regs_use));
 			insn->detail->regs_read_count = (uint8_t)count_positive(insns[i].regs_use);
 
-			memcpy(insn->detail->regs_write, insns[i].regs_mod, sizeof(insns[i].regs_mod));
+			cs_memcpy(insn->detail->regs_write, insns[i].regs_mod, sizeof(insns[i].regs_mod));
 			insn->detail->regs_write_count = (uint8_t)count_positive(insns[i].regs_mod);
 
-			memcpy(insn->detail->groups, insns[i].groups, sizeof(insns[i].groups));
+			cs_memcpy(insn->detail->groups, insns[i].groups, sizeof(insns[i].groups));
 			insn->detail->groups_count = (uint8_t)count_positive(insns[i].groups);
 
 			if (insns[i].branch || insns[i].indirect_branch) {
@@ -3296,12 +3300,12 @@ sparc_hint Sparc_map_hint(const char *name)
 {
 	size_t i, l1, l2;
 
-	l1 = strlen(name);
+	l1 = cs_strlen(name);
 	for(i = 0; i < ARR_SIZE(hint_maps); i++) {
-		l2 = strlen(hint_maps[i].name);
+		l2 = cs_strlen(hint_maps[i].name);
 		if (l1 > l2) {
 			// compare the last part of @name with this hint string
-			if (!strcmp(hint_maps[i].name, name + (l1 - l2)))
+			if (!cs_strcmp(hint_maps[i].name, name + (l1 - l2)))
 				return hint_maps[i].id;
 		}
 	}

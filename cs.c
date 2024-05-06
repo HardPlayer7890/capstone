@@ -17,6 +17,10 @@
 #include "utils.h"
 #include "MCRegisterInfo.h"
 
+#if defined(CAPSTONE_SECRETGRIND)
+#	include "VG_defines.h"
+#endif
+
 #ifdef CAPSTONE_USE_SYS_DYN_MEM
 #define INSN_CACHE_SIZE 32
 #else
@@ -78,19 +82,29 @@ static void archs_enable(void)
 
 unsigned int all_arch = 0;
 
-#ifdef CAPSTONE_USE_SYS_DYN_MEM
+#if CAPSTONE_SECRETGRIND
+cs_malloc_t cs_mem_malloc = vg_malloc;
+cs_calloc_t cs_mem_calloc = vg_calloc;
+cs_realloc_t cs_mem_realloc = vg_realloc;
+cs_free_t cs_mem_free = vg_free;
+cs_vsnprintf_t cs_vsnprintf = vg_vsnprintf;
+#else
+
+#	ifdef CAPSTONE_USE_SYS_DYN_MEM
 cs_malloc_t cs_mem_malloc = malloc;
 cs_calloc_t cs_mem_calloc = calloc;
 cs_realloc_t cs_mem_realloc = realloc;
 cs_free_t cs_mem_free = free;
 cs_vsnprintf_t cs_vsnprintf = vsnprintf;
-#else
+#	else
 cs_malloc_t cs_mem_malloc = NULL;
 cs_calloc_t cs_mem_calloc = NULL;
 cs_realloc_t cs_mem_realloc = NULL;
 cs_free_t cs_mem_free = NULL;
 cs_vsnprintf_t cs_vsnprintf = NULL;
-#endif
+#	endif
+
+#endif // CAPSTONE_SECRETGRIND
 
 CAPSTONE_EXPORT
 unsigned int cs_version(int *major, int *minor)
@@ -245,7 +259,7 @@ cs_err cs_close(csh *handle)
 
 	cs_mem_free(ud->insn_cache);
 
-	memset(ud, 0, sizeof(*ud));
+	cs_memset(ud, 0, sizeof(*ud));
 	cs_mem_free(ud);
 
 	// invalidate this handle by ZERO out its value.
@@ -266,7 +280,7 @@ static void fill_insn(struct cs_struct *handle, cs_insn *insn, char *buffer, MCI
 
 	// fill the instruction bytes.
 	// we might skip some redundant bytes in front in the case of X86
-	memcpy(insn->bytes, code + insn->size - copy_size, copy_size);
+	cs_memcpy(insn->bytes, code + insn->size - copy_size, copy_size);
 	insn->size = copy_size;
 
 	// alias instruction might have ID saved in OpcodePub
@@ -299,7 +313,7 @@ static void fill_insn(struct cs_struct *handle, cs_insn *insn, char *buffer, MCI
 		// find the next non-space char
 		sp++;
 		for (; ((*sp == ' ') || (*sp == '\t')); sp++);
-		strncpy(insn->op_str, sp, sizeof(insn->op_str) - 1);
+		cs_strncpy(insn->op_str, sp, sizeof(insn->op_str) - 1);
 		insn->op_str[sizeof(insn->op_str) - 1] = '\0';
 	} else
 		insn->op_str[0] = '\0';
@@ -400,11 +414,11 @@ static void skipdata_opstr(char *opstr, const uint8_t *buffer, size_t size)
 		return;
 	}
 
-	len = sprintf(p, "0x%02x", buffer[0]);
+	len = cs_sprintf(p, "0x%02x", buffer[0]);
 	p+= len;
 
 	for(i = 1; i < size; i++) {
-		len = sprintf(p, ", 0x%02x", buffer[i]);
+		len = cs_sprintf(p, ", 0x%02x", buffer[i]);
 		p+= len;
 	}
 }
@@ -528,8 +542,8 @@ size_t cs_disasm(csh ud, const uint8_t *buffer, size_t size, uint64_t offset, si
 			insn_cache->id = 0;	// invalid ID for this "data" instruction
 			insn_cache->address = offset;
 			insn_cache->size = (uint16_t)skipdata_bytes;
-			memcpy(insn_cache->bytes, buffer, skipdata_bytes);
-			strncpy(insn_cache->mnemonic, handle->skipdata_setup.mnemonic,
+			cs_memcpy(insn_cache->bytes, buffer, skipdata_bytes);
+			cs_strncpy(insn_cache->mnemonic, handle->skipdata_setup.mnemonic,
 					sizeof(insn_cache->mnemonic) - 1);
 			skipdata_opstr(insn_cache->op_str, buffer, skipdata_bytes);
 			insn_cache->detail = NULL;
@@ -729,8 +743,8 @@ bool cs_disasm_iter(csh ud, const uint8_t **code, size_t *size,
 		insn->id = 0;	// invalid ID for this "data" instruction
 		insn->address = *address;
 		insn->size = (uint16_t)skipdata_bytes;
-		memcpy(insn->bytes, *code, skipdata_bytes);
-		strncpy(insn->mnemonic, handle->skipdata_setup.mnemonic,
+		cs_memcpy(insn->bytes, *code, skipdata_bytes);
+		cs_strncpy(insn->mnemonic, handle->skipdata_setup.mnemonic,
 				sizeof(insn->mnemonic) - 1);
 		skipdata_opstr(insn->op_str, *code, skipdata_bytes);
 

@@ -29,6 +29,10 @@
 #include "../../MathExtras.h"
 #include "PPCMapping.h"
 
+#if defined(CAPSTONE_SECRETGRIND)
+#	include "../../VG_defines.h"
+#endif
+
 #ifndef CAPSTONE_DIET
 static char *getRegisterName(unsigned RegNo);
 #endif
@@ -64,9 +68,9 @@ void PPC_post_printer(csh ud, cs_insn *insn, char *insn_asm, MCInst *mci)
 		return;
 
 	// check if this insn has branch hint
-	if (strrchr(insn_asm, '+') != NULL && !strstr(insn_asm, ".+")) {
+	if (cs_strrchr(insn_asm, '+') != NULL && !cs_strstr(insn_asm, ".+")) {
 		insn->detail->ppc.bh = PPC_BH_PLUS;
-	} else if (strrchr(insn_asm, '-') != NULL) {
+	} else if (cs_strrchr(insn_asm, '-') != NULL) {
 		insn->detail->ppc.bh = PPC_BH_MINUS;
 	}
 }
@@ -182,11 +186,11 @@ void PPC_printInst(MCInst *MI, SStream *O, void *Info)
 		mnem = printAliasInstr(MI, O, Info);
 
 	if (mnem != NULL) {
-		if (strlen(mnem) > 0) {
+		if (cs_strlen(mnem) > 0) {
 			struct ppc_alias alias;
 			// check to remove the last letter of ('.', '-', '+')
-			if (mnem[strlen(mnem) - 1] == '-' || mnem[strlen(mnem) - 1] == '+' || mnem[strlen(mnem) - 1] == '.')
-				mnem[strlen(mnem) - 1] = '\0';
+			if (mnem[cs_strlen(mnem) - 1] == '-' || mnem[cs_strlen(mnem) - 1] == '+' || mnem[cs_strlen(mnem) - 1] == '.')
+				mnem[cs_strlen(mnem) - 1] = '\0';
 
 			if (PPC_alias_insn(mnem, &alias)) {
 				MCInst_setOpcodePub(MI, alias.id);
@@ -251,7 +255,7 @@ static void printPredicateOperand(MCInst *MI, unsigned OpNo,
 
 	MI->flat_insn->detail->ppc.bc = (ppc_bc)cc_normalize(Code);
 
-	if (!strcmp(Modifier, "cc")) {
+	if (!cs_strcmp(Modifier, "cc")) {
 		switch ((ppc_predicate)Code) {
 			default:	// unreachable
 			case PPC_PRED_LT_MINUS:
@@ -302,7 +306,7 @@ static void printPredicateOperand(MCInst *MI, unsigned OpNo,
 		}
 	}
 
-	if (!strcmp(Modifier, "pm")) {
+	if (!cs_strcmp(Modifier, "pm")) {
 		switch ((ppc_predicate)Code) {
 			case PPC_PRED_LT:
 			case PPC_PRED_LE:

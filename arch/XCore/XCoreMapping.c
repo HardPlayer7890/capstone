@@ -10,6 +10,10 @@
 
 #include "XCoreMapping.h"
 
+#if defined(CAPSTONE_SECRETGRIND)
+#	include "../../VG_defines.h"
+#endif
+
 #define GET_INSTRINFO_ENUM
 #include "XCoreGenInstrInfo.inc"
 
@@ -63,7 +67,7 @@ xcore_reg XCore_reg_id(char *name)
 	int i;
 
 	for(i = 1; i < ARR_SIZE(reg_name_maps); i++) {
-		if (!strcmp(name, reg_name_maps[i].name))
+		if (!cs_strcmp(name, reg_name_maps[i].name))
 			return reg_name_maps[i].id;
 	}
 
@@ -1377,13 +1381,13 @@ void XCore_get_insn_id(cs_struct *h, cs_insn *insn, unsigned int id)
 
 		if (h->detail) {
 #ifndef CAPSTONE_DIET
-			memcpy(insn->detail->regs_read, insns[i].regs_use, sizeof(insns[i].regs_use));
+			cs_memcpy(insn->detail->regs_read, insns[i].regs_use, sizeof(insns[i].regs_use));
 			insn->detail->regs_read_count = (uint8_t)count_positive(insns[i].regs_use);
 
-			memcpy(insn->detail->regs_write, insns[i].regs_mod, sizeof(insns[i].regs_mod));
+			cs_memcpy(insn->detail->regs_write, insns[i].regs_mod, sizeof(insns[i].regs_mod));
 			insn->detail->regs_write_count = (uint8_t)count_positive(insns[i].regs_mod);
 
-			memcpy(insn->detail->groups, insns[i].groups, sizeof(insns[i].groups));
+			cs_memcpy(insn->detail->groups, insns[i].groups, sizeof(insns[i].groups));
 			insn->detail->groups_count = (uint8_t)count_positive(insns[i].groups);
 
 			if (insns[i].branch || insns[i].indirect_branch) {

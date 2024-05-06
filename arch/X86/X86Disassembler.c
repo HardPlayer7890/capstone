@@ -31,6 +31,10 @@
 #include "../../utils.h"
 #include "X86Mapping.h"
 
+#if defined(CAPSTONE_SECRETGRIND)
+#	include "../../VG_defines.h"
+#endif
+
 #define GET_REGINFO_ENUM
 #define GET_REGINFO_MC_DESC
 #include "X86GenRegisterInfo.inc"
@@ -728,7 +732,7 @@ static void update_pub_insn(cs_insn *pub, InternalInstruction *inter, uint8_t *p
 	prefixes[3] = inter->prefix3;
 
 	if (inter->vectorExtensionType != 0)
-		memcpy(pub->detail->x86.opcode, inter->vectorExtensionPrefix, sizeof(pub->detail->x86.opcode));
+		cs_memcpy(pub->detail->x86.opcode, inter->vectorExtensionPrefix, sizeof(pub->detail->x86.opcode));
 	else {
 		if (inter->twoByteEscape) {
 			if (inter->threeByteEscape) {
@@ -790,7 +794,7 @@ bool X86_getInstruction(csh ud, const uint8_t *code, size_t code_len,
 	info.size = code_len;
 	info.offset = address;
 
-	memset(&insn, 0, offsetof(InternalInstruction, reader));
+	cs_memset(&insn, 0, offsetof(InternalInstruction, reader));
 
 	if (instr->flat_insn->detail) {
 		instr->flat_insn->detail->x86.op_count = 0;
@@ -799,9 +803,9 @@ bool X86_getInstruction(csh ud, const uint8_t *code, size_t code_len,
 		instr->flat_insn->detail->x86.avx_sae = false;
 		instr->flat_insn->detail->x86.avx_rm = X86_AVX_RM_INVALID;
 
-		memset(instr->flat_insn->detail->x86.prefix, 0, sizeof(instr->flat_insn->detail->x86.prefix));
-		memset(instr->flat_insn->detail->x86.opcode, 0, sizeof(instr->flat_insn->detail->x86.opcode));
-		memset(instr->flat_insn->detail->x86.operands, 0, sizeof(instr->flat_insn->detail->x86.operands));
+		cs_memset(instr->flat_insn->detail->x86.prefix, 0, sizeof(instr->flat_insn->detail->x86.prefix));
+		cs_memset(instr->flat_insn->detail->x86.opcode, 0, sizeof(instr->flat_insn->detail->x86.opcode));
+		cs_memset(instr->flat_insn->detail->x86.operands, 0, sizeof(instr->flat_insn->detail->x86.operands));
 	}
 
 	if (handle->mode & CS_MODE_16)

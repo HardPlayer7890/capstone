@@ -15,8 +15,12 @@
 #include "myinttypes.h"
 #include "utils.h"
 
+#if defined(CAPSTONE_SECRETGRIND)
+#	include "VG_defines.h"
+#endif
+
 #ifdef _MSC_VER
-#pragma warning(disable: 4996) // disable MSVC's warning on strcpy()
+#pragma warning(disable: 4996) // disable MSVC's warning on cs_strcpy()
 #endif
 
 void SStream_Init(SStream *ss)
@@ -28,9 +32,9 @@ void SStream_Init(SStream *ss)
 void SStream_concat0(SStream *ss, char *s)
 {
 #ifndef CAPSTONE_DIET
-	unsigned int len = (unsigned int) strlen(s);
+	unsigned int len = (unsigned int) cs_strlen(s);
 
-	memcpy(ss->buffer + ss->index, s, len);
+	cs_memcpy(ss->buffer + ss->index, s, len);
 	ss->index += len;
 	ss->buffer[ss->index] = '\0';
 #endif

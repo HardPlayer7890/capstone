@@ -27,6 +27,10 @@
 
 #include "AArch64BaseInfo.h"
 
+#if defined(CAPSTONE_SECRETGRIND)
+#	include "../../VG_defines.h"
+#endif
+
 char *A64NamedImmMapper_toString(A64NamedImmMapper *N, uint32_t Value, bool *Valid)
 {
 	unsigned i;
@@ -48,9 +52,9 @@ static bool compare_lower_str(char *s1, char *s2)
 	bool res;
 	char *lower = cs_strdup(s2), *c;
 	for (c = lower; *c; c++)
-		*c = (char)tolower((int) *c);
+		*c = (char)cs_tolower((int) *c);
 
-	res = (strcmp(s1, lower) == 0);
+	res = (cs_strcmp(s1, lower) == 0);
 	cs_mem_free(lower);
 
 	return res;
@@ -592,7 +596,7 @@ void A64SysRegMapper_toString(A64SysRegMapper *S, uint32_t Bits, bool *Valid, ch
 	for (i = 0; i < ARR_SIZE(SysRegPairs); ++i) {
 		if (SysRegPairs[i].Value == Bits) {
 			*Valid = true;
-			strcpy(result, SysRegPairs[i].Name);
+			cs_strcpy(result, SysRegPairs[i].Name);
 			return;
 		}
 	}
@@ -603,7 +607,7 @@ void A64SysRegMapper_toString(A64SysRegMapper *S, uint32_t Bits, bool *Valid, ch
 		for (i = 0; i < ARR_SIZE(CycloneSysRegPairs); ++i) {
 			if (CycloneSysRegPairs[i].Value == Bits) {
 				*Valid = true;
-				strcpy(result, CycloneSysRegPairs[i].Name);
+				cs_strcpy(result, CycloneSysRegPairs[i].Name);
 				return;
 			}
 		}
@@ -614,7 +618,7 @@ void A64SysRegMapper_toString(A64SysRegMapper *S, uint32_t Bits, bool *Valid, ch
 	for (i = 0; i < S->NumInstPairs; ++i) {
 		if (S->InstPairs[i].Value == Bits) {
 			*Valid = true;
-			strcpy(result, S->InstPairs[i].Name);
+			cs_strcpy(result, S->InstPairs[i].Name);
 			return;
 		}
 	}
@@ -642,7 +646,7 @@ void A64SysRegMapper_toString(A64SysRegMapper *S, uint32_t Bits, bool *Valid, ch
 	Op2S = utostr(Op2, false);
 
 	//printf("Op1S: %s, CRnS: %s, CRmS: %s, Op2S: %s\n", Op1S, CRnS, CRmS, Op2S);
-	dummy = sprintf(result, "s3_%s_c%s_c%s_%s", Op1S, CRnS, CRmS, Op2S);
+	dummy = cs_sprintf(result, "s3_%s_c%s_c%s_%s", Op1S, CRnS, CRmS, Op2S);
 	(void)dummy;
 
 	cs_mem_free(Op1S);

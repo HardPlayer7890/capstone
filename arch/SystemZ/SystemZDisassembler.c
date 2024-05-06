@@ -30,6 +30,10 @@
 
 #include "SystemZMCTargetDesc.h"
 
+#if defined(CAPSTONE_SECRETGRIND)
+#	include "../../VG_defines.h"
+#endif
+
 static uint64_t getFeatureBits(int mode)
 {
 	// support everything
@@ -442,8 +446,10 @@ bool SystemZ_getInstruction(csh ud, const uint8_t *code, size_t code_len, MCInst
 		return false;
 
 	if (MI->flat_insn->detail) {
-		memset(MI->flat_insn->detail, 0, offsetof(cs_detail, sysz)+sizeof(cs_sysz));
+		cs_memset(MI->flat_insn->detail, 0, sizeof(cs_detail));
 	}
+
+	cs_memcpy(Bytes, code, *size);
 
 	// Construct the instruction.
 	Inst = 0;

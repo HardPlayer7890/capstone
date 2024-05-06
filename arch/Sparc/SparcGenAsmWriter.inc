@@ -5683,9 +5683,9 @@ static char *printAliasInstr(MCInst *MI, SStream *OS, void *info)
   SStream_concat0(OS, AsmMnem);
   if (*AsmOps) {
     SStream_concat0(OS, "\t");
-    if (strstr(AsmOps, "icc"))
+    if (cs_strstr(AsmOps, "icc"))
       Sparc_addReg(MI, SPARC_REG_ICC);
-    if (strstr(AsmOps, "xcc"))
+    if (cs_strstr(AsmOps, "xcc"))
       Sparc_addReg(MI, SPARC_REG_XCC);
     for (c = AsmOps; *c; c++) {
       if (*c == '$') {

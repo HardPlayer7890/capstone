@@ -28,6 +28,10 @@
 #include "../../MCDisassembler.h"
 #include "../../MathExtras.h"
 
+#if defined(CAPSTONE_SECRETGRIND)
+#	include "../../VG_defines.h"
+#endif
+
 static uint64_t getFeatureBits(int mode)
 {
 	// support everything
@@ -741,7 +745,7 @@ bool XCore_getInstruction(csh ud, const uint8_t *code, size_t code_len, MCInst *
 	}
 
 	if (MI->flat_insn->detail) {
-		memset(MI->flat_insn->detail, 0, offsetof(cs_detail, xcore)+sizeof(cs_xcore));
+		cs_memset(MI->flat_insn->detail, 0, sizeof(cs_detail));
 	}
 
 	// Calling the auto-generated decoder function.

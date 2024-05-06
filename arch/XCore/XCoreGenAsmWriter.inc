@@ -424,7 +424,7 @@ static void printInstruction(MCInst *MI, SStream *O, MCRegisterInfo *MRI)
 #endif
 
 
-  if (strchr((const char *)AsmStrs+(Bits & 2047)-1, '[')) {
+  if (cs_strchr((const char *)AsmStrs+(Bits & 2047)-1, '[')) {
     set_mem_access(MI, true, 0);
   }
 

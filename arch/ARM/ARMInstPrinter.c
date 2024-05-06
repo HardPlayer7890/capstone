@@ -35,6 +35,10 @@
 #include "ARMGenSubtargetInfo.inc"
 
 #include "ARMGenSystemRegister.inc"
+#if defined(CAPSTONE_SECRETGRIND)
+#	include "../../VG_defines.h"
+#endif
+
 
 static void printRegName(cs_struct *h, SStream *OS, unsigned RegNo);
 
@@ -289,7 +293,7 @@ void ARM_post_printer(csh ud, cs_insn *insn, char *insn_asm, MCInst *mci)
 		return;
 
 	// check if this insn requests write-back
-	if (mci->writeback || (strrchr(insn_asm, '!')) != NULL) {
+	if (mci->writeback || (cs_strrchr(insn_asm, '!')) != NULL) {
 		insn->detail->arm.writeback = true;
 	} else if (mci->csh->mode & CS_MODE_THUMB) {
 		// handle some special instructions with writeback
@@ -407,8 +411,8 @@ void ARM_post_printer(csh ud, cs_insn *insn, char *insn_asm, MCInst *mci)
 
 		for (i = 0; i < ARR_SIZE(insn_update_flgs); i++) {
 			if (insn->id == insn_update_flgs[i].id &&
-					!strncmp(insn_asm, insn_update_flgs[i].name,
-						strlen(insn_update_flgs[i].name))) {
+					!cs_strncmp(insn_asm, insn_update_flgs[i].name,
+						cs_strlen(insn_update_flgs[i].name))) {
 				insn->detail->arm.update_flags = true;
 				// we have to update regs_write array as well
 				for (j = 0; j < ARR_SIZE(insn->detail->regs_write); j++) {

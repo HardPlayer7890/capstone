@@ -28,6 +28,10 @@
 #include "../../MCDisassembler.h"
 #include "../../MathExtras.h"
 
+#if defined(CAPSTONE_SECRETGRIND)
+#	include "../../VG_defines.h"
+#endif
+
 #define GET_REGINFO_ENUM
 #include "PPCGenRegisterInfo.inc"
 
@@ -539,7 +543,7 @@ static DecodeStatus getInstruction(MCInst *MI,
 			(code[1] <<  8) | (code[0] <<  0);
 
 	if (MI->flat_insn->detail) {
-		memset(MI->flat_insn->detail, 0, offsetof(cs_detail, ppc) + sizeof(cs_ppc));
+		cs_memset(MI->flat_insn->detail, 0, sizeof(cs_detail));
 	}
 
 	if (MI->csh->mode & CS_MODE_QPX) {

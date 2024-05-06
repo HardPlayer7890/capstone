@@ -101,6 +101,10 @@
 #include "../../utils.h"
 #include "X86Mapping.h"
 
+#if defined(CAPSTONE_SECRETGRIND)
+#	include "../../VG_defines.h"
+#endif
+
 #define GET_REGINFO_ENUM
 #define GET_REGINFO_MC_DESC
 #include "X86GenRegisterInfo.inc"
@@ -869,9 +873,14 @@ static int reader(const struct reader_info *info, uint8_t *byte, uint64_t addres
 // copy x86 detail information from internal structure to public structure
 static void update_pub_insn(cs_insn *pub, InternalInstruction *inter)
 {
-	if (inter->vectorExtensionType != 0) {
-		memcpy(pub->detail->x86.opcode, inter->vectorExtensionPrefix, sizeof(pub->detail->x86.opcode));
-	} else {
+	prefixes[0] = inter->prefix0;
+	prefixes[1] = inter->prefix1;
+	prefixes[2] = inter->prefix2;
+	prefixes[3] = inter->prefix3;
+
+	if (inter->vectorExtensionType != 0)
+		cs_memcpy(pub->detail->x86.opcode, inter->vectorExtensionPrefix, sizeof(pub->detail->x86.opcode));
+	else {
 		if (inter->twoByteEscape) {
 			if (inter->threeByteEscape) {
 				pub->detail->x86.opcode[0] = inter->twoByteEscape;
@@ -950,22 +959,14 @@ bool X86_getInstruction(csh ud, const uint8_t *code, size_t code_len,
 	info.size = code_len;
 	info.offset = address;
 
+	cs_memset(&insn, 0, offsetof(InternalInstruction, reader));
+
 	if (instr->flat_insn->detail) {
 		// instr->flat_insn->detail initialization: 3 alternatives
 
-		// 1. The whole structure, this is how it's done in other arch disassemblers
-		// Probably overkill since cs_detail is huge because of the 36 operands of ARM
-		
-		//memset(instr->flat_insn->detail, 0, sizeof(cs_detail));
-
-		// 2. Only the part relevant to x86
-		memset(instr->flat_insn->detail, 0, offsetof(cs_detail, x86) + sizeof(cs_x86));
-
-		// 3. The relevant part except for x86.operands
-		// sizeof(cs_x86) is 0x1c0, sizeof(x86.operands) is 0x180
-		// marginally faster, should be okay since x86.op_count is set to 0
-
-		//memset(instr->flat_insn->detail, 0, offsetof(cs_detail, x86)+offsetof(cs_x86, operands));
+		cs_memset(instr->flat_insn->detail->x86.prefix, 0, sizeof(instr->flat_insn->detail->x86.prefix));
+		cs_memset(instr->flat_insn->detail->x86.opcode, 0, sizeof(instr->flat_insn->detail->x86.opcode));
+		cs_memset(instr->flat_insn->detail->x86.operands, 0, sizeof(instr->flat_insn->detail->x86.operands));
 	}
 
 	if (handle->mode & CS_MODE_16)

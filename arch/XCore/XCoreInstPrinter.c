@@ -35,6 +35,11 @@
 #include "XCoreMapping.h"
 
 static const char *getRegisterName(unsigned RegNo);
+#if defined(CAPSTONE_SECRETGRIND)
+#	include "../../VG_defines.h"
+#endif
+
+static char *getRegisterName(unsigned RegNo);
 
 void XCore_post_printer(csh ud, cs_insn *insn, char *insn_asm, MCInst *mci)
 {
@@ -51,14 +56,22 @@ void XCore_insn_extract(MCInst *MI, const char *code)
 	char *p, *p2;
 	char tmp[128];
 
-	strcpy(tmp, code); // safe because code is way shorter than 128 bytes
+// make MSVC shut up on cs_strcpy()
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4996)
+#endif
+	cs_strcpy(tmp, code); // safe because code is way shorter than 128 bytes
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 	// find the first space
-	p = strchr(tmp, ' ');
+	p = cs_strchr(tmp, ' ');
 	if (p) {
 		p++;
 		// find the next ','
-		p2 = strchr(p, ',');
+		p2 = cs_strchr(p, ',');
 		if (p2) {
 			*p2 = '\0';
 			id = XCore_reg_id(p);
@@ -111,7 +124,7 @@ void XCore_insn_extract(MCInst *MI, const char *code)
 							} else {
 								// a number means disp
 								if (MI->csh->detail) {
-									MI->flat_insn->detail->xcore.operands[MI->flat_insn->detail->xcore.op_count].mem.disp = atoi(p2);
+									MI->flat_insn->detail->xcore.operands[MI->flat_insn->detail->xcore.op_count].mem.disp = cs_atoi(p2);
 								}
 							}
 						}

@@ -39,8 +39,12 @@
 
 #include "Sparc.h"
 
-static const char *getRegisterName(unsigned RegNo);
-static void printInstruction(MCInst *MI, SStream *O, const MCRegisterInfo *MRI);
+#if defined(CAPSTONE_SECRETGRIND)
+#	include "../../VG_defines.h"
+#endif
+
+static char *getRegisterName(unsigned RegNo);
+static void printInstruction(MCInst *MI, SStream *O, MCRegisterInfo *MRI);
 static void printMemOperand(MCInst *MI, int opNum, SStream *O, const char *Modifier);
 static void printOperand(MCInst *MI, int opNum, SStream *O);
 
@@ -287,7 +291,7 @@ static void printMemOperand(MCInst *MI, int opNum, SStream *O, const char *Modif
 	printOperand(MI, opNum, O);
 
 	// If this is an ADD operand, emit it like normal operands.
-	if (Modifier && !strcmp(Modifier, "arith")) {
+	if (Modifier && !cs_strcmp(Modifier, "arith")) {
 		SStream_concat0(O, ", ");
 		printOperand(MI, opNum + 1, O);
 		set_mem_access(MI, false);
@@ -358,10 +362,10 @@ void Sparc_printInst(MCInst *MI, SStream *O, void *Info)
 	mnem = printAliasInstr(MI, O, Info);
 	if (mnem) {
 		// fixup instruction id due to the change in alias instruction
-		strncpy(instr, mnem, sizeof(instr));
-		instr[sizeof(instr) - 1] = '\0';
+		cs_strncpy(instr, mnem, cs_strlen(mnem));
+		instr[cs_strlen(mnem)] = '\0';
 		// does this contains hint with a coma?
-		p = strchr(instr, ',');
+		p = cs_strchr(instr, ',');
 		if (p)
 			*p = '\0';	// now instr only has instruction mnemonic
 		MCInst_setOpcodePub(MI, Sparc_map_insn(instr));

@@ -28,6 +28,9 @@
 #include "../../MCDisassembler.h"
 #include "../../MathExtras.h"
 
+#if defined(CAPSTONE_SECRETGRIND)
+#	include "../../VG_defines.h"
+#endif
 
 #define GET_REGINFO_MC_DESC
 #define GET_REGINFO_ENUM
@@ -210,6 +213,8 @@ static DecodeStatus readInstruction32(const uint8_t *code, size_t len, uint32_t 
 		// not enough data
 		return MCDisassembler_Fail;
 
+	cs_memcpy(Bytes, code, 4);
+
 	// Encoded as a big-endian 32-bit word in the stream.
 	*Insn = (code[3] <<  0) |
 		(code[2] <<  8) |
@@ -230,7 +235,7 @@ bool Sparc_getInstruction(csh ud, const uint8_t *code, size_t code_len, MCInst *
 		return false;
 
 	if (MI->flat_insn->detail) {
-		memset(MI->flat_insn->detail, 0, offsetof(cs_detail, sparc)+sizeof(cs_sparc));
+		cs_memset(MI->flat_insn->detail, 0, sizeof(cs_detail));
 	}
 
 	Result = decodeInstruction_4(DecoderTableSparc32, MI, Insn, address,
